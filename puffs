@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tally</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23 1C1F1A'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='%23E8A33D'>%23</text></svg>">
+<style>
+  :root{
+    --bg:#15170f;
+    --bg2:#1c1f16;
+    --card:#20241a;
+    --ember:#e8a33d;
+    --ember-dim:#8a5f27;
+    --text:#eee7d8;
+    --text-dim:#8f9484;
+    --line:#2c3122;
+    --good:#7fae6a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:radial-gradient(circle at 50% -10%, #262c1a 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    padding:28px 20px 40px;
+    user-select:none;
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-top:6px;
+  }
+  .date{
+    font-size:13px;
+    color:var(--text-dim);
+    margin-top:2px;
+    margin-bottom:22px;
+  }
+  .ring-wrap{
+    position:relative;
+    width:250px;
+    height:250px;
+    margin:6px 0 10px;
+  }
+  svg.ring{ transform:rotate(-90deg); width:100%; height:100%; }
+  .ring-track{ fill:none; stroke:var(--line); stroke-width:10; }
+  .ring-fill{ fill:none; stroke:var(--ember); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .5s ease; }
+  .ring-center{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .count{
+    font-size:64px;
+    font-weight:700;
+    line-height:1;
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  .count-label{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:6px;
+    letter-spacing:.05em;
+  }
+  .tap-btn{
+    width:150px; height:150px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(160deg, var(--ember) 0%, #c47f22 100%);
+    color:#1a1408;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:.03em;
+    box-shadow:0 8px 24px rgba(232,163,61,.28), inset 0 1px 0 rgba(255,255,255,.25);
+    margin-top:18px;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .tap-btn:active{ transform:scale(.94); box-shadow:0 4px 14px rgba(232,163,61,.22); }
+  .undo{
+    margin-top:16px;
+    background:none;
+    border:none;
+    color:var(--text-dim);
+    font-size:13px;
+    padding:8px 14px;
+    text-decoration:underline;
+    text-decoration-color:var(--line);
+  }
+  .stats{
+    width:100%;
+    max-width:340px;
+    margin-top:30px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .stat{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+  }
+  .stat-val{ font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .stat-lbl{ font-size:11px; color:var(--text-dim); margin-top:3px; letter-spacing:.03em; }
+  .stat.full{ grid-column:1 / -1; }
+  .trend{
+    width:100%;
+    max-width:340px;
+    margin-top:10px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+  }
+  .trend-title{ font-size:11px; color:var(--text-dim); letter-spacing:.03em; margin-bottom:10px; }
+  .bars{ display:flex; align-items:flex-end; gap:6px; height:60px; }
+  .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .bar{ width:100%; border-radius:4px 4px 2px 2px; background:var(--ember-dim); min-height:2px; }
+  .bar.today{ background:var(--ember); }
+  .bar-day{ font-size:9px; color:var(--text-dim); }
+  .goal-row{
+    width:100%; max-width:340px; margin-top:14px;
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:12px 16px;
+  }
+  .goal-row span{ font-size:13px; color:var(--text-dim); }
+  .goal-input{
+    width:56px; background:var(--bg2); border:1px solid var(--line); border-radius:8px;
+    color:var(--text); text-align:center; font-size:14px; padding:6px 4px;
+  }
+  .foot{ margin-top:24px; font-size:11px; color:var(--text-dim); text-align:center; line-height:1.6; }
+</style>
+</head>
+<body>
+
+  <div class="eyebrow">Cutting Down</div>
+  <div class="date" id="dateLabel"></div>
+
+  <div class="ring-wrap">
+    <svg class="ring" viewBox="0 0 120 120">
+      <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+      <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+    </svg>
+    <div class="ring-center">
+      <div class="count" id="countVal">0</div>
+      <div class="count-label" id="goalLabel">of 0 goal</div>
+    </div>
+  </div>
+
+  <button class="tap-btn" id="tapBtn">+ LOG ONE</button>
+  <button class="undo" id="undoBtn">undo last</button>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="streakVal">0</div>
+      <div class="stat-lbl">DAY STREAK BELOW GOAL</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="avgVal">0</div>
+      <div class="stat-lbl">7-DAY AVERAGE</div>
+    </div>
+  </div>
+
+  <div class="trend">
+    <div class="trend-title">LAST 7 DAYS</div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="goal-row">
+    <span>Daily goal</span>
+    <input type="number" class="goal-input" id="goalInput" min="1" value="10">
+  </div>
+
+  <div class="foot">Data is stored privately on this device.<br>Tap once each time you use your pod.</div>
+
+<script>
+const todayKey = () => new Date().toISOString().slice(0,10);
+const dayLabel = (offset) => {
+  const d = new Date(); d.setDate(d.getDate()-offset);
+  return d.toISOString().slice(0,10);
+};
+
+let state = { log:{}, goal:10 };
+
+async function load(){
+  try{
+    const r = await window.storage.get('tally-state');
+    if(r && r.value) state = JSON.parse(r.value);
+  }catch(e){ /* first run, no data yet */ }
+  if(!state.log) state.log = {};
+  if(!state.goal) state.goal = 10;
+  document.getElementById('goalInput').value = state.goal;
+  render();
+}
+
+async function save(){
+  try{ await window.storage.set('tally-state', JSON.stringify(state)); }
+  catch(e){ console.error('save failed', e); }
+}
+
+function render(){
+  const tk = todayKey();
+  const count = state.log[tk] || 0;
+  const goal = state.goal || 10;
+
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric'});
+  document.getElementById('countVal').textContent = count;
+  document.getElementById('goalLabel').textContent = `of ${goal} goal`;
+
+  const circumference = 326.7;
+  const pct = Math.min(count/goal, 1);
+  const offset = circumference * (1 - pct);
+  const ring = document.getElementById('ringFill');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = count > goal ? '#c9584a' : (pct >= 1 ? '#c9584a' : '#e8a33d');
+
+  // 7 day bars + streak + avg
+  const bars = document.getElementById('bars');
+  bars.innerHTML = '';
+  let sum = 0, streak = 0, streakBroken = false;
+  const maxVal = Math.max(goal, ...[0,1,2,3,4,5,6].map(o => state.log[dayLabel(o)]||0));
+
+  for(let o=6; o>=0; o--){
+    const k = dayLabel(o);
+    const v = state.log[k] || 0;
+    sum += v;
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    const bar = document.createElement('div');
+    bar.className = 'bar' + (o===0 ? ' today' : '');
+    const h = maxVal > 0 ? Math.max((v/maxVal)*54, 2) : 2;
+    bar.style.height = h + 'px';
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-day';
+    lbl.textContent = new Date(k).toLocaleDateString(undefined,{weekday:'narrow'});
+    col.appendChild(bar); col.appendChild(lbl);
+    bars.appendChild(col);
+  }
+
+  for(let o=0; o<30; o++){
+    const k = dayLabel(o);
+    if(o===0 && count===0 && !state.log[k]) continue; // today not counted yet if empty
+    const v = state.log[k];
+    if(v === undefined) break;
+    if(v <= goal) streak++;
+    else break;
+  }
+
+  document.getElementById('streakVal').textContent = streak;
+  document.getElementById('avgVal').textContent = (sum/7).toFixed(1);
+}
+
+document.getElementById('tapBtn').addEventListener('click', () => {
+  const tk = todayKey();
+  state.log[tk] = (state.log[tk] || 0) + 1;
+  if(navigator.vibrate) navigator.vibrate(15);
+  save();
+  render();
+});
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+  const tk = todayKey();
+  if(state.log[tk] && state.log[tk] > 0){
+    state.log[tk] -= 1;
+    save();
+    render();
+  }
+});
+
+document.getElementById('goalInput').addEventListener('change', (e) => {
+  const v = parseInt(e.target.value, 10);
+  state.goal = (isNaN(v) || v < 1) ? 10 : v;
+  save();
+  render();
+});
+
+load();
+</script>
+</body>
+</html>
